@@ -60,15 +60,18 @@ If the script is not on `PATH`, use the venv interpreter:
 
 ## Tasks tools
 
+Server version **0.2.0** — async `call_tool` via `asyncio.to_thread`, richer API error `details`, compact write responses, `description_format`, `tasks_bulk_delete`, label remove-by-name, and bulk `external_id` upsert.
+
 | Tool | Notes |
 |------|--------|
-| `tasks_search` | List/search; default compact rows |
+| `tasks_search` | List/search; default compact rows; `created_at` cursors |
 | `tasks_get` | Default `mark_seen=false` (no side effects) |
-| `tasks_schema` | Types, statuses, transitions |
+| `tasks_schema` | Types, statuses, `description_formats`, transitions |
 | `tasks_people_list` | Account users for `@` references |
-| `tasks_create` / `tasks_update` / `tasks_transition` | Mutations |
-| `tasks_bulk_upsert` | `items` batch or `external_id` upsert |
-| `tasks_comment` / `tasks_label` / `tasks_link` | Discussion, labels, relations/resources |
+| `tasks_create` / `tasks_update` / `tasks_transition` | Mutations; compact by default; `description_format` |
+| `tasks_bulk_upsert` | `items` batch (max 100, upsert by `external_id`) or single upsert |
+| `tasks_bulk_delete` | Batch delete; requires `confirm=true` |
+| `tasks_comment` / `tasks_label` / `tasks_link` | Discussion, labels (remove by id or name), relations/resources |
 | `tasks_delete` | Requires `confirm=true` |
 
 ## Adding a service module

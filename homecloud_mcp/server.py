@@ -19,7 +19,7 @@ from homecloud_mcp.modules import build_registry
 logger = logging.getLogger(__name__)
 
 SERVER_NAME = "homecloud-mcp"
-SERVER_VERSION = "0.1.0"
+SERVER_VERSION = "0.2.0"
 
 
 def create_server(registry: ModuleRegistry) -> Server:
@@ -32,7 +32,8 @@ def create_server(registry: ModuleRegistry) -> Server:
     @app.call_tool()
     async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[types.TextContent]:
         try:
-            result = registry.call_tool(name, arguments)
+            # Sync SDK would block the event loop; run tools in a worker thread.
+            result = await asyncio.to_thread(registry.call_tool, name, arguments or {})
             text = json.dumps(result, default=str, ensure_ascii=False)
             return [types.TextContent(type="text", text=text)]
         except Exception as exc:

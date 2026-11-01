@@ -75,3 +75,63 @@ def test_tasks_delete_with_confirm(
     out = module.call_tool("tasks_delete", {"key": "TASK-9", "confirm": True})
     assert out == {"deleted": "TASK-9"}
     tasks_api.delete.assert_called_once_with("TASK-9")
+
+
+def test_tasks_create_compact_default(
+    module: TasksModule, tasks_api: MagicMock
+) -> None:
+    tasks_api.create.return_value = {
+        "key": "TASK-3",
+        "title": "X",
+        "type": "task",
+        "status": "open",
+        "priority": "p3",
+        "assignees": [],
+        "labels": [],
+        "description": "long body" * 20,
+    }
+    out = module.call_tool(
+        "tasks_create",
+        {"title": "X", "description": "hi", "description_format": "markdown"},
+    )
+    assert out["key"] == "TASK-3"
+    assert "description" not in out
+    tasks_api.create.assert_called_once()
+    assert tasks_api.create.call_args.kwargs["description_format"] == "markdown"
+
+
+def test_tasks_bulk_delete_requires_confirm(module: TasksModule) -> None:
+    with pytest.raises(HomeCloudError, match="confirm=true"):
+        module.call_tool("tasks_bulk_delete", {"keys": ["TASK-1"]})
+
+
+def test_tasks_bulk_delete(
+    module: TasksModule, tasks_api: MagicMock
+) -> None:
+    tasks_api.bulk_delete.return_value = {"deleted": 1, "failed": 0, "results": []}
+    out = module.call_tool(
+        "tasks_bulk_delete", {"keys": ["TASK-1"], "confirm": True}
+    )
+    assert out["deleted"] == 1
+    tasks_api.bulk_delete.assert_called_once_with(["TASK-1"])
+
+
+def test_tasks_label_remove_by_name(
+    module: TasksModule, tasks_api: MagicMock
+) -> None:
+    tasks_api.labels.return_value = [{"id": "lab-1", "name": "Bug"}]
+    module.call_tool(
+        "tasks_label",
+        {"key": "TASK-1", "action": "remove", "name": "bug"},
+    )
+    tasks_api.remove_label.assert_called_once_with("TASK-1", "lab-1")
+
+
+def test_tasks_bulk_upsert_items(
+    module: TasksModule, tasks_api: MagicMock
+) -> None:
+    tasks_api.bulk_create.return_value = {"created": 1, "failed": 0, "results": []}
+    items = [{"title": "A", "external_id": "ext-1"}]
+    out = module.call_tool("tasks_bulk_upsert", {"items": items})
+    assert out["created"] == 1
+    tasks_api.bulk_create.assert_called_once_with(items)
