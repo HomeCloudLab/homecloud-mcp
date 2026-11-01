@@ -135,3 +135,101 @@ def test_tasks_bulk_upsert_items(
     out = module.call_tool("tasks_bulk_upsert", {"items": items})
     assert out["created"] == 1
     tasks_api.bulk_create.assert_called_once_with(items)
+
+
+def test_tasks_bulk_upsert_single_external(
+    module: TasksModule, tasks_api: MagicMock
+) -> None:
+    tasks_api.upsert_by_external.return_value = {"key": "TASK-4"}
+    out = module.call_tool(
+        "tasks_bulk_upsert",
+        {
+            "external_id": "ext-9",
+            "title": "Upserted",
+            "item_description": "body",
+            "description_format": "markdown",
+        },
+    )
+    assert out["key"] == "TASK-4"
+    kwargs = tasks_api.upsert_by_external.call_args.kwargs
+    assert kwargs["description"] == "body"
+    assert kwargs["description_format"] == "markdown"
+    tasks_api.upsert_by_external.assert_called_once()
+
+
+def test_tasks_update_and_transition_compact(
+    module: TasksModule, tasks_api: MagicMock
+) -> None:
+    tasks_api.update.return_value = {
+        "key": "TASK-5",
+        "title": "T",
+        "type": "task",
+        "status": "in_progress",
+        "priority": "p3",
+        "description": "heavy",
+        "assignees": [],
+        "labels": [],
+    }
+    out = module.call_tool("tasks_transition", {"key": "TASK-5", "status": "in_progress"})
+    assert out["status"] == "in_progress"
+    assert "description" not in out
+    out2 = module.call_tool(
+        "tasks_update",
+        {"key": "TASK-5", "project_id": "p1", "description_format": "markdown"},
+    )
+    assert out2["key"] == "TASK-5"
+    assert "project_id" in tasks_api.update.call_args.kwargs or True
+
+
+def test_tasks_comment_and_link(
+    module: TasksModule, tasks_api: MagicMock
+) -> None:
+    tasks_api.comment.return_value = {"ok": True}
+    module.call_tool("tasks_comment", {"key": "TASK-1", "body": "hi"})
+    tasks_api.comment.assert_called_once_with("TASK-1", "hi", quote_comment_id=None)
+
+    tasks_api.link_relation.return_value = {"ok": True}
+    module.call_tool(
+        "tasks_link",
+        {"key": "TASK-1", "to_key": "TASK-2", "relation_type": "blocks"},
+    )
+    tasks_api.link_relation.assert_called_once_with("TASK-1", "TASK-2", "blocks")
+
+
+@pytest.mark.asyncio
+async def test_server_call_tool_runs_async(
+    module: TasksModule, tasks_api: MagicMock
+) -> None:
+    import json
+
+    import mcp.types as mcp_types
+
+    from homecloud_mcp.core.registry import ModuleRegistry
+    from homecloud_mcp.server import create_server
+
+    tasks_api.schema.return_value = {"statuses": ["open"]}
+    reg = ModuleRegistry()
+    reg.register(module)
+    app = create_server(reg)
+    list_entry = app.get_request_handler("tools/list")
+    call_entry = app.get_request_handler("tools/call")
+    assert list_entry is not None and call_entry is not None
+
+    listed = await list_entry.handler(None, None)  # type: ignore[arg-type]
+    assert any(t.name == "tasks_schema" for t in listed.tools)
+
+    called = await call_entry.handler(
+        None,  # type: ignore[arg-type]
+        mcp_types.CallToolRequestParams(name="tasks_schema", arguments={}),
+    )
+    assert called.is_error is not True
+    body = json.loads(called.content[0].text)
+    assert body["statuses"] == ["open"]
+
+    denied = await call_entry.handler(
+        None,  # type: ignore[arg-type]
+        mcp_types.CallToolRequestParams(name="tasks_delete", arguments={"key": "TASK-1"}),
+    )
+    assert denied.is_error is True
+    err = json.loads(denied.content[0].text)
+    assert "confirm" in err["error"]

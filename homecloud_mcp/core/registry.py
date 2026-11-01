@@ -15,11 +15,16 @@ class ToolDefinition:
     input_schema: dict[str, Any]
     read_only: bool = False
     destructive: bool = False
+    idempotent: bool = False
+    """Human title shown in MCP clients (Cursor / Claude), like Atlassian tools."""
+    title: str | None = None
 
     def to_mcp_tool(self) -> types.Tool:
         annotations = types.ToolAnnotations(
-            readOnlyHint=self.read_only if self.read_only else None,
-            destructiveHint=self.destructive if self.destructive else None,
+            title=self.title or self.name.replace("_", " ").title(),
+            readOnlyHint=True if self.read_only else None,
+            destructiveHint=True if self.destructive else None,
+            idempotentHint=True if self.idempotent else None,
         )
         return types.Tool(
             name=self.name,

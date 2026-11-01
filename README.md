@@ -60,7 +60,7 @@ If the script is not on `PATH`, use the venv interpreter:
 
 ## Tasks tools
 
-Server version **0.2.0** — async `call_tool` via `asyncio.to_thread`, richer API error `details`, compact write responses, `description_format`, `tasks_bulk_delete`, label remove-by-name, and bulk `external_id` upsert.
+Server version **0.2.1** — MCP init metadata (title/instructions/website), human tool titles + readOnly/destructive/idempotent hints (Cursor-friendly, Jira-like), async `call_tool` via `asyncio.to_thread`, richer API error `details`, compact write responses, `description_format`, `tasks_bulk_delete`, label remove-by-name, and bulk `external_id` upsert.
 
 | Tool | Notes |
 |------|--------|

@@ -62,7 +62,7 @@ class TasksModule:
     def list_tools(self) -> list[ToolDefinition]:
         return [
             ToolDefinition(
-                name="tasks_search",
+                name="tasks_search", title="Search tasks",
                 description=(
                     "Search/list task items (console ``q`` grammar: @user, &label, "
                     "#service/resource, type:, due:, …). Cursor works for sort=-sequence "
@@ -106,7 +106,7 @@ class TasksModule:
                 read_only=True,
             ),
             ToolDefinition(
-                name="tasks_get",
+                name="tasks_get", title="Get task",
                 description="Fetch one task by key. Default mark_seen=false (read-only).",
                 input_schema={
                     **_OBJ,
@@ -129,19 +129,19 @@ class TasksModule:
                 read_only=True,
             ),
             ToolDefinition(
-                name="tasks_schema",
+                name="tasks_schema", title="Task schema",
                 description="Valid types, statuses, priorities, description_formats, and transitions.",
                 input_schema={**_OBJ, "properties": {}},
                 read_only=True,
             ),
             ToolDefinition(
-                name="tasks_people_list",
+                name="tasks_people_list", title="List people",
                 description="List account users for assignee resolution (@username, me).",
                 input_schema={**_OBJ, "properties": {}},
                 read_only=True,
             ),
             ToolDefinition(
-                name="tasks_create",
+                name="tasks_create", title="Create task",
                 description="Create a task item. Returns a compact summary by default.",
                 input_schema={
                     **_OBJ,
@@ -173,7 +173,7 @@ class TasksModule:
                 },
             ),
             ToolDefinition(
-                name="tasks_update",
+                name="tasks_update", title="Update task", idempotent=True,
                 description=(
                     "Patch fields on a task (assignees accept usernames / me). "
                     "Supports type, parent_key, project_id, description_format."
@@ -201,7 +201,7 @@ class TasksModule:
                 },
             ),
             ToolDefinition(
-                name="tasks_transition",
+                name="tasks_transition", title="Transition status", idempotent=True,
                 description="Change task status (validated by workflow on the API).",
                 input_schema={
                     **_OBJ,
@@ -215,7 +215,7 @@ class TasksModule:
                 },
             ),
             ToolDefinition(
-                name="tasks_bulk_upsert",
+                name="tasks_bulk_upsert", title="Bulk upsert tasks", idempotent=True,
                 description=(
                     "Bulk create/upsert items (max 100). Rows with ``external_id`` upsert "
                     "so retries are idempotent. Or pass ``external_id`` + fields for a "
@@ -247,7 +247,7 @@ class TasksModule:
                 },
             ),
             ToolDefinition(
-                name="tasks_bulk_delete",
+                name="tasks_bulk_delete", title="Bulk delete tasks",
                 description="Delete many tasks by key (max 100). Requires confirm=true.",
                 input_schema={
                     **_OBJ,
@@ -269,7 +269,7 @@ class TasksModule:
                 destructive=True,
             ),
             ToolDefinition(
-                name="tasks_comment",
+                name="tasks_comment", title="Add comment",
                 description="Add a comment to a task.",
                 input_schema={
                     **_OBJ,
@@ -282,7 +282,7 @@ class TasksModule:
                 },
             ),
             ToolDefinition(
-                name="tasks_label",
+                name="tasks_label", title="Manage label", idempotent=True,
                 description=(
                     "Add or remove a label on a task. Remove accepts ``label_id`` or ``name``."
                 ),
@@ -303,7 +303,7 @@ class TasksModule:
                 },
             ),
             ToolDefinition(
-                name="tasks_link",
+                name="tasks_link", title="Link task",
                 description="Link a related task or a platform resource.",
                 input_schema={
                     **_OBJ,
@@ -319,7 +319,7 @@ class TasksModule:
                 },
             ),
             ToolDefinition(
-                name="tasks_delete",
+                name="tasks_delete", title="Delete task",
                 description="Permanently delete a task. Requires confirm=true.",
                 input_schema={
                     **_OBJ,
