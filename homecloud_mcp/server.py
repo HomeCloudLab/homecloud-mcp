@@ -34,6 +34,12 @@ Destructive tools require confirm=true. Bulk create with external_id upserts (sa
 For list pagination use cursor with sort=-sequence or ±created_at.
 """
 SERVER_WEBSITE = "https://console.holab.abrdns.com"
+# Same mark as console BIMI / brand plate (1:1 SVG). Hosts that honor MCP icons
+# (Cursor Customize / Marketplace) can show this instead of the generic glyph.
+SERVER_ICON_SRC = f"{SERVER_WEBSITE}/bimi/logo.svg"
+SERVER_ICONS = [
+    types.Icon(src=SERVER_ICON_SRC, mimeType="image/svg+xml", sizes=["715x715"]),
+]
 
 
 def create_server(registry: ModuleRegistry) -> Server:
@@ -73,6 +79,7 @@ def create_server(registry: ModuleRegistry) -> Server:
         description=SERVER_DESCRIPTION,
         instructions=SERVER_INSTRUCTIONS,
         website_url=SERVER_WEBSITE,
+        icons=SERVER_ICONS,
         on_list_tools=on_list_tools,
         on_call_tool=on_call_tool,
     )

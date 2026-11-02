@@ -10,6 +10,7 @@ from homecloud_mcp.core.registry import ModuleRegistry
 from homecloud_mcp.modules.tasks import TasksModule
 from homecloud_mcp.server import (
     SERVER_DESCRIPTION,
+    SERVER_ICON_SRC,
     SERVER_INSTRUCTIONS,
     SERVER_NAME,
     SERVER_TITLE,
@@ -35,6 +36,8 @@ def test_initialization_options_are_client_friendly(registry: ModuleRegistry) ->
     assert opts.instructions and "compact" in opts.instructions.lower()
     assert "confirm=true" in SERVER_INSTRUCTIONS
     assert opts.website_url and "console" in opts.website_url
+    assert opts.icons and opts.icons[0].src == SERVER_ICON_SRC
+    assert opts.icons[0].mime_type == "image/svg+xml"
 
 
 def test_list_tools_have_human_titles_and_hints(registry: ModuleRegistry) -> None:
@@ -73,5 +76,18 @@ def test_all_expected_tools_registered(registry: ModuleRegistry) -> None:
             "tasks_label",
             "tasks_link",
             "tasks_delete",
+            "tasks_activity",
+            "tasks_comment_file_url",
+            "tasks_comment_update",
+            "tasks_comment_delete",
+            "tasks_archive",
+            "tasks_restore",
+            "tasks_watch",
+            "tasks_unwatch",
+            "tasks_relations",
+            "tasks_unlink",
+            "tasks_labels_list",
+            "tasks_share",
+            "tasks_projects",
         ]
     )

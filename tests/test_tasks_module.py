@@ -77,6 +77,41 @@ def test_tasks_delete_with_confirm(
     tasks_api.delete.assert_called_once_with("TASK-9")
 
 
+def test_tasks_activity_and_file_url(
+    module: TasksModule, tasks_api: MagicMock
+) -> None:
+    tasks_api.activity.return_value = [
+        {"event_type": "commented", "payload": {"body": "a"}},
+        {"event_type": "commented", "payload": {"body": "b"}},
+        {"event_type": "commented", "payload": {"body": "c"}},
+    ]
+    out = module.call_tool("tasks_activity", {"key": "TASK-36", "limit": 2})
+    assert out["total"] == 2
+    assert out["items"][0]["payload"]["body"] == "b"
+    tasks_api.comment_file_url.return_value = {"url": "https://example/x"}
+    url = module.call_tool(
+        "tasks_comment_file_url",
+        {
+            "key": "TASK-36",
+            "comment_id": "cid",
+            "so_uri": "so://bucket/key.png",
+        },
+    )
+    assert url["url"].startswith("https://")
+    tasks_api.comment_file_url.assert_called_once_with(
+        "TASK-36", "cid", so_uri="so://bucket/key.png"
+    )
+
+
+def test_tasks_projects_create(module: TasksModule, tasks_api: MagicMock) -> None:
+    tasks_api.create_project.return_value = {"id": "p1", "name": "MCP TEST"}
+    out = module.call_tool(
+        "tasks_projects", {"action": "create", "name": "MCP TEST"}
+    )
+    assert out["name"] == "MCP TEST"
+    tasks_api.create_project.assert_called_once()
+
+
 def test_tasks_create_compact_default(
     module: TasksModule, tasks_api: MagicMock
 ) -> None:

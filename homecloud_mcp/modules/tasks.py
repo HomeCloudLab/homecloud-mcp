@@ -335,6 +335,188 @@ class TasksModule:
                 },
                 destructive=True,
             ),
+            ToolDefinition(
+                name="tasks_activity", title="Task activity",
+                description=(
+                    "Discussion + history for a task (comments, status changes, …). "
+                    "Comment payloads may include ``attachments`` with ``so_uri`` — "
+                    "use tasks_comment_file_url to download."
+                ),
+                input_schema={
+                    **_OBJ,
+                    "properties": {
+                        "key": _STR,
+                        "limit": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 200,
+                            "description": "Return only the last N events (default all)",
+                        },
+                    },
+                    "required": ["key"],
+                },
+                read_only=True,
+            ),
+            ToolDefinition(
+                name="tasks_comment_file_url", title="Comment file URL",
+                description=(
+                    "Presigned download URL for a chat attachment. Pass ``so_uri`` from "
+                    "tasks_activity comment attachments."
+                ),
+                input_schema={
+                    **_OBJ,
+                    "properties": {
+                        "key": _STR,
+                        "comment_id": _STR,
+                        "so_uri": _STR,
+                    },
+                    "required": ["key", "comment_id", "so_uri"],
+                },
+                read_only=True,
+            ),
+            ToolDefinition(
+                name="tasks_comment_update", title="Edit comment", idempotent=True,
+                description="Update a comment body.",
+                input_schema={
+                    **_OBJ,
+                    "properties": {"key": _STR, "comment_id": _STR, "body": _STR},
+                    "required": ["key", "comment_id", "body"],
+                },
+            ),
+            ToolDefinition(
+                name="tasks_comment_delete", title="Delete comment",
+                description="Delete a comment. Requires confirm=true.",
+                input_schema={
+                    **_OBJ,
+                    "properties": {
+                        "key": _STR,
+                        "comment_id": _STR,
+                        "confirm": {"type": "boolean", "default": False},
+                    },
+                    "required": ["key", "comment_id"],
+                },
+                destructive=True,
+            ),
+            ToolDefinition(
+                name="tasks_archive", title="Archive task",
+                description="Archive a task (optional cancel=true).",
+                input_schema={
+                    **_OBJ,
+                    "properties": {
+                        "key": _STR,
+                        "cancel": _BOOL,
+                        "compact": {"type": "boolean", "default": True},
+                    },
+                    "required": ["key"],
+                },
+            ),
+            ToolDefinition(
+                name="tasks_restore", title="Restore task",
+                description="Restore an archived task.",
+                input_schema={
+                    **_OBJ,
+                    "properties": {
+                        "key": _STR,
+                        "compact": {"type": "boolean", "default": True},
+                    },
+                    "required": ["key"],
+                },
+            ),
+            ToolDefinition(
+                name="tasks_watch", title="Watch task", idempotent=True,
+                description="Add a watcher (default me).",
+                input_schema={
+                    **_OBJ,
+                    "properties": {"key": _STR, "user": {**_STR, "default": "me"}},
+                    "required": ["key"],
+                },
+            ),
+            ToolDefinition(
+                name="tasks_unwatch", title="Unwatch task", idempotent=True,
+                description="Remove a watcher (default me).",
+                input_schema={
+                    **_OBJ,
+                    "properties": {"key": _STR, "user": {**_STR, "default": "me"}},
+                    "required": ["key"],
+                },
+            ),
+            ToolDefinition(
+                name="tasks_relations", title="List relations",
+                description="List related-task links for a task.",
+                input_schema={**_OBJ, "properties": {"key": _STR}, "required": ["key"]},
+                read_only=True,
+            ),
+            ToolDefinition(
+                name="tasks_unlink", title="Unlink relation/resource",
+                description="Remove a relation (relation_id) or resource link (link_id).",
+                input_schema={
+                    **_OBJ,
+                    "properties": {
+                        "key": _STR,
+                        "relation_id": _STR,
+                        "link_id": {
+                            **_STR,
+                            "description": "Resource link id (from task.resources)",
+                        },
+                        "confirm": {"type": "boolean", "default": False},
+                    },
+                    "required": ["key"],
+                },
+                destructive=True,
+            ),
+            ToolDefinition(
+                name="tasks_labels_list", title="List labels",
+                description="Account-wide task labels.",
+                input_schema={
+                    **_OBJ,
+                    "properties": {"include_archived": _BOOL},
+                },
+                read_only=True,
+            ),
+            ToolDefinition(
+                name="tasks_share", title="Manage shares",
+                description="Create, list, or revoke public share links for a task.",
+                input_schema={
+                    **_OBJ,
+                    "properties": {
+                        "key": _STR,
+                        "action": {
+                            "type": "string",
+                            "enum": ["create", "list", "revoke"],
+                            "default": "list",
+                        },
+                        "expires_in": {**_STR, "default": "never"},
+                        "label": _STR,
+                        "include_discussion": _BOOL,
+                        "share_id": _STR,
+                        "confirm": {
+                            "type": "boolean",
+                            "description": "Required true for revoke",
+                            "default": False,
+                        },
+                    },
+                    "required": ["key"],
+                },
+            ),
+            ToolDefinition(
+                name="tasks_projects", title="List/create projects",
+                description=(
+                    "List Tasks board projects, or create one (name required; slug optional)."
+                ),
+                input_schema={
+                    **_OBJ,
+                    "properties": {
+                        "action": {
+                            "type": "string",
+                            "enum": ["list", "create"],
+                            "default": "list",
+                        },
+                        "name": _STR,
+                        "slug": _STR,
+                        "description": _STR,
+                    },
+                },
+            ),
         ]
 
     def call_tool(self, name: str, arguments: dict[str, Any]) -> Any:
@@ -352,6 +534,19 @@ class TasksModule:
             "tasks_label": self._label,
             "tasks_link": self._link,
             "tasks_delete": self._delete,
+            "tasks_activity": self._activity,
+            "tasks_comment_file_url": self._comment_file_url,
+            "tasks_comment_update": self._comment_update,
+            "tasks_comment_delete": self._comment_delete,
+            "tasks_archive": self._archive,
+            "tasks_restore": self._restore,
+            "tasks_watch": self._watch,
+            "tasks_unwatch": self._unwatch,
+            "tasks_relations": self._relations,
+            "tasks_unlink": self._unlink,
+            "tasks_labels_list": self._labels_list,
+            "tasks_share": self._share,
+            "tasks_projects": self._projects,
         }.get(name)
         if handler is None:
             raise KeyError(name)
@@ -503,3 +698,93 @@ class TasksModule:
             raise HomeCloudError("tasks_delete requires confirm=true")
         self._tasks.delete(args["key"])
         return {"deleted": args["key"]}
+
+    def _activity(self, args: dict[str, Any]) -> Any:
+        items = self._tasks.activity(args["key"])
+        limit = args.get("limit")
+        if isinstance(limit, int) and limit > 0:
+            items = items[-limit:]
+        return {"items": items, "total": len(items)}
+
+    def _comment_file_url(self, args: dict[str, Any]) -> Any:
+        return self._tasks.comment_file_url(
+            args["key"], args["comment_id"], so_uri=args["so_uri"]
+        )
+
+    def _comment_update(self, args: dict[str, Any]) -> Any:
+        return self._tasks.comment_update(args["key"], args["comment_id"], args["body"])
+
+    def _comment_delete(self, args: dict[str, Any]) -> Any:
+        if not args.get("confirm"):
+            raise HomeCloudError("tasks_comment_delete requires confirm=true")
+        return self._tasks.comment_delete(args["key"], args["comment_id"])
+
+    def _archive(self, args: dict[str, Any]) -> Any:
+        item = self._tasks.archive(args["key"], cancel=bool(args.get("cancel", False)))
+        return _compact_write(item, args)
+
+    def _restore(self, args: dict[str, Any]) -> Any:
+        item = self._tasks.restore(args["key"])
+        return _compact_write(item, args)
+
+    def _watch(self, args: dict[str, Any]) -> Any:
+        return self._tasks.watch(args["key"], args.get("user") or "me")
+
+    def _unwatch(self, args: dict[str, Any]) -> Any:
+        return self._tasks.unwatch(args["key"], args.get("user") or "me")
+
+    def _relations(self, args: dict[str, Any]) -> Any:
+        return {"items": self._tasks.list_relations(args["key"])}
+
+    def _unlink(self, args: dict[str, Any]) -> Any:
+        if not args.get("confirm"):
+            raise HomeCloudError("tasks_unlink requires confirm=true")
+        key = args["key"]
+        if args.get("relation_id"):
+            self._tasks.unlink_relation(key, args["relation_id"])
+            return {"unlinked": "relation", "id": args["relation_id"]}
+        if args.get("link_id"):
+            return self._tasks.unlink_resource(key, args["link_id"])
+        raise HomeCloudError("tasks_unlink requires relation_id or link_id")
+
+    def _labels_list(self, args: dict[str, Any]) -> Any:
+        return {
+            "items": self._tasks.labels(
+                include_archived=bool(args.get("include_archived", False))
+            )
+        }
+
+    def _share(self, args: dict[str, Any]) -> Any:
+        key = args["key"]
+        action = args.get("action") or "list"
+        if action == "list":
+            return {"items": self._tasks.list_shares(key)}
+        if action == "create":
+            return self._tasks.create_share(
+                key,
+                expires_in=args.get("expires_in") or "never",
+                label=args.get("label"),
+                include_discussion=bool(args.get("include_discussion", False)),
+            )
+        if action == "revoke":
+            if not args.get("confirm"):
+                raise HomeCloudError("tasks_share revoke requires confirm=true")
+            share_id = args.get("share_id")
+            if not share_id:
+                raise HomeCloudError("tasks_share revoke requires share_id")
+            self._tasks.revoke_share(key, share_id)
+            return {"revoked": share_id}
+        raise HomeCloudError(f"unknown tasks_share action: {action}")
+
+    def _projects(self, args: dict[str, Any]) -> Any:
+        action = args.get("action") or "list"
+        if action == "list":
+            return {"items": self._tasks.list_projects()}
+        if action == "create":
+            name = args.get("name")
+            if not name:
+                raise HomeCloudError("tasks_projects create requires name")
+            return self._tasks.create_project(
+                name, slug=args.get("slug"), description=args.get("description")
+            )
+        raise HomeCloudError(f"unknown tasks_projects action: {action}")
