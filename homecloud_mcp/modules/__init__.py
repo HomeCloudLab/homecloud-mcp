@@ -7,9 +7,10 @@ from homecloud_sdk import HomeCloudClient
 
 
 def default_modules(client: HomeCloudClient) -> list[ServiceModule]:
+    from homecloud_mcp.modules.so import SoModule
     from homecloud_mcp.modules.tasks import TasksModule
 
-    return [TasksModule(client)]
+    return [TasksModule(client), SoModule(client)]
 
 
 def build_registry(client: HomeCloudClient) -> ModuleRegistry:

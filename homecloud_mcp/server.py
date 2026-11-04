@@ -23,7 +23,7 @@ SERVER_NAME = "homecloud-mcp"
 SERVER_VERSION = __version__
 SERVER_TITLE = "HomeCloud"
 SERVER_DESCRIPTION = (
-    "HomeCloud platform MCP — Tasks today; more services via the same registry."
+    "HomeCloud platform MCP — Tasks + SO list tools; more services via the same registry."
 )
 SERVER_INSTRUCTIONS = """\
 HomeCloud console/control-plane tools for the signed-in account (SDK profile / Access Key).
@@ -32,6 +32,8 @@ Prefer compact tool responses (default). Use fields=… only when you need extra
 Tasks keys look like TASK-12 or a numeric sequence. Assignees accept usernames or "me".
 Destructive tools require confirm=true. Bulk create with external_id upserts (safe retries).
 For list pagination use cursor with sort=-sequence or ±created_at.
+SO: so_list_buckets / so_list_objects (read-only; objects need Access Key data-plane).
+Tasks need a user-bound Access Key (not a service-account key).
 """
 SERVER_WEBSITE = "https://console.holab.abrdns.com"
 # Same mark as console BIMI / brand plate (1:1 SVG). Hosts that honor MCP icons
@@ -56,10 +58,16 @@ def create_server(registry: ModuleRegistry) -> Server:
             result = await asyncio.to_thread(
                 registry.call_tool, params.name, params.arguments or {}
             )
-            text = json.dumps(result, default=str, ensure_ascii=False)
-            return types.CallToolResult(
-                content=[types.TextContent(type="text", text=text)]
-            )
+            content: list[types.TextContent] = []
+            payload = result
+            if isinstance(result, dict) and "__markdown__" in result:
+                md = result.get("__markdown__")
+                payload = {k: v for k, v in result.items() if k != "__markdown__"}
+                if isinstance(md, str) and md.strip():
+                    content.append(types.TextContent(type="text", text=md))
+            text = json.dumps(payload, default=str, ensure_ascii=False)
+            content.append(types.TextContent(type="text", text=text))
+            return types.CallToolResult(content=content)
         except Exception as exc:
             logger.exception("tool %s failed", params.name)
             payload = tool_error_payload(exc)

@@ -37,6 +37,29 @@ def compact_task_summary(item: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def task_card_markdown(item: dict[str, Any], *, console_base: str | None = None) -> str:
+    """Jira-like markdown card for MCP hosts that render markdown tool results."""
+    summary = compact_task_summary(item)
+    key = summary.get("key") or "?"
+    title = summary.get("title") or "(no title)"
+    status = summary.get("status") or "—"
+    priority = summary.get("priority") or "—"
+    assignee = summary.get("assignee") or "—"
+    labels = summary.get("labels") or []
+    label_txt = ", ".join(labels) if labels else "—"
+    base = (console_base or "https://console.holab.abrdns.com").rstrip("/")
+    link = f"{base}/console/tasks/{key}"
+    return (
+        f"### {key} — {title}\n\n"
+        f"| | |\n|---|---|\n"
+        f"| **Status** | `{status}` |\n"
+        f"| **Priority** | `{priority}` |\n"
+        f"| **Assignee** | {assignee} |\n"
+        f"| **Labels** | {label_txt} |\n\n"
+        f"[Open in HomeCloud]({link})"
+    )
+
+
 def apply_fields(data: Any, fields: list[str] | None) -> Any:
     if fields is None:
         return data

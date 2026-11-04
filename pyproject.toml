@@ -1,7 +1,7 @@
 [project]
 name = "homecloud-mcp"
-version = "0.2.3"
-description = "HomeCloud platform MCP server (Tasks and future services)"
+version = "0.2.4"
+description = "HomeCloud platform MCP server (Tasks + SO list; more services via registry)"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }

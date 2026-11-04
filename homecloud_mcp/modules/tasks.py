@@ -8,7 +8,7 @@ from homecloud_core.errors import HomeCloudError
 from homecloud_sdk import HomeCloudClient
 from homecloud_sdk.services import TasksAPI
 
-from homecloud_mcp.core.compact import apply_fields, compact_task_summary
+from homecloud_mcp.core.compact import apply_fields, compact_task_summary, task_card_markdown
 from homecloud_mcp.core.registry import ToolDefinition
 
 _OBJ = {"type": "object"}
@@ -569,26 +569,36 @@ class TasksModule:
             cursor=args.get("cursor"),
             sort=args.get("sort"),
         )
-        items = page.get("items", [])
+        raw_items = page.get("items", [])
+        cards = [task_card_markdown(i) for i in raw_items[:8]]
+        items = raw_items
         if compact and fields is None:
-            items = [compact_task_summary(i) for i in items]
+            items = [compact_task_summary(i) for i in raw_items]
         else:
-            items = apply_fields(items, fields)
-        return {
+            items = apply_fields(raw_items, fields)
+        out: dict[str, Any] = {
             "items": items,
             "total": page.get("total"),
             "next_cursor": page.get("next_cursor"),
         }
+        if cards:
+            out["__markdown__"] = "\n\n---\n\n".join(cards)
+        return out
 
     def _get(self, args: dict[str, Any]) -> Any:
         key = args["key"]
         mark_seen = bool(args.get("mark_seen", False))
         item = self._tasks.get(key, mark_seen=mark_seen)
+        card = task_card_markdown(item)
         if args.get("fields") is not None:
-            return apply_fields(item, args.get("fields"))
-        if args.get("compact"):
-            return compact_task_summary(item)
-        return item
+            body = apply_fields(item, args.get("fields"))
+        elif args.get("compact"):
+            body = compact_task_summary(item)
+        else:
+            body = item
+        if isinstance(body, dict):
+            return {**body, "__markdown__": card}
+        return {"item": body, "__markdown__": card}
 
     def _schema(self, _args: dict[str, Any]) -> Any:
         return self._tasks.schema()
