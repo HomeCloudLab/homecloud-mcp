@@ -15,7 +15,18 @@ Configure credentials the same way as the CLI (`homecloud configure`, `homecloud
 
 ## Run
 
-stdio transport (for Cursor and other MCP hosts):
+### Remote MCP (platform)
+
+Production Wave 1 hosts Streamable HTTP on **cloud-api** at `https://mcp.<apex>/mcp` with a Console JWT:
+
+```bash
+homecloud login
+eval "$(homecloud mcp env)"   # sets HC_ACCESS_TOKEN — do not commit
+```
+
+Configure Cursor/Claude with `Authorization: Bearer ${env:HC_ACCESS_TOKEN}` (see `homecloud-docs` `cli/mcp.md`). Wave 1 exposes **`tasks_search` only**.
+
+### stdio (local)
 
 ```bash
 homecloud-mcp

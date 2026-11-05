@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 from homecloud_mcp.core.registry import ModuleRegistry, ServiceModule
 from homecloud_sdk import HomeCloudClient
+
+# Wave 1 Remote MCP surface (cloud-api Streamable HTTP). stdio keeps the full set.
+REMOTE_WAVE1_TOOLS: frozenset[str] = frozenset({"tasks_search"})
 
 
 def default_modules(client: HomeCloudClient) -> list[ServiceModule]:
@@ -13,8 +18,41 @@ def default_modules(client: HomeCloudClient) -> list[ServiceModule]:
     return [TasksModule(client), SoModule(client)]
 
 
-def build_registry(client: HomeCloudClient) -> ModuleRegistry:
+def build_registry(
+    client: HomeCloudClient,
+    *,
+    include_tools: Iterable[str] | None = None,
+) -> ModuleRegistry:
+    """Build the module registry.
+
+    ``include_tools`` — when set, only those tool names are registered (Wave 1 Remote).
+    """
+    allow = frozenset(include_tools) if include_tools is not None else None
     registry = ModuleRegistry()
     for module in default_modules(client):
-        registry.register(module)
+        if allow is None:
+            registry.register(module)
+            continue
+        tools = [t for t in module.list_tools() if t.name in allow]
+        if not tools:
+            continue
+        registry.register(_FilteredModule(module, tools))
     return registry
+
+
+class _FilteredModule:
+    """Expose a subset of another module's tools without duplicating handlers."""
+
+    def __init__(self, inner: ServiceModule, tools: list) -> None:
+        self.name = inner.name
+        self._inner = inner
+        self._tools = tools
+        self._names = {t.name for t in tools}
+
+    def list_tools(self):
+        return list(self._tools)
+
+    def call_tool(self, name: str, arguments: dict):
+        if name not in self._names:
+            raise KeyError(f"unknown tool: {name}")
+        return self._inner.call_tool(name, arguments)
