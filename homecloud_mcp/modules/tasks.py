@@ -16,9 +16,10 @@ _STR = {"type": "string"}
 _BOOL = {"type": "boolean"}
 _ARR = {"type": "array"}
 
-_TASK_TYPES = ["task", "bug", "epic", "story", "subtask"]
-_PRIORITIES = ["p0", "p1", "p2", "p3", "p4"]
-_DESC_FORMATS = ["plain", "markdown"]
+# Prefer live tasks_schema values; keep enums loose enough for older accounts.
+_TASK_TYPES = ["task", "change", "epic", "incident", "maintenance", "bug", "story", "subtask"]
+_PRIORITIES = ["p1", "p2", "p3", "p4", "p0"]
+_DESC_FORMATS = ["markdown", "plain"]
 
 _BULK_ITEM_SCHEMA: dict[str, Any] = {
     "type": "object",

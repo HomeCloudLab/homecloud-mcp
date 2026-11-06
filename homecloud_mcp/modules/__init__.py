@@ -7,8 +7,39 @@ from collections.abc import Iterable
 from homecloud_mcp.core.registry import ModuleRegistry, ServiceModule
 from homecloud_sdk import HomeCloudClient
 
-# Wave 1 Remote MCP surface (cloud-api Streamable HTTP). stdio keeps the full set.
-REMOTE_WAVE1_TOOLS: frozenset[str] = frozenset({"tasks_search"})
+# Remote MCP Tasks surface (cloud-api Streamable HTTP). SO stays stdio-only for now.
+REMOTE_TASKS_TOOLS: frozenset[str] = frozenset(
+    {
+        "tasks_search",
+        "tasks_get",
+        "tasks_schema",
+        "tasks_people_list",
+        "tasks_create",
+        "tasks_update",
+        "tasks_transition",
+        "tasks_bulk_upsert",
+        "tasks_bulk_delete",
+        "tasks_comment",
+        "tasks_label",
+        "tasks_link",
+        "tasks_delete",
+        "tasks_activity",
+        "tasks_comment_file_url",
+        "tasks_comment_update",
+        "tasks_comment_delete",
+        "tasks_archive",
+        "tasks_restore",
+        "tasks_watch",
+        "tasks_unwatch",
+        "tasks_relations",
+        "tasks_unlink",
+        "tasks_labels_list",
+        "tasks_share",
+        "tasks_projects",
+    }
+)
+# Back-compat alias
+REMOTE_WAVE1_TOOLS = REMOTE_TASKS_TOOLS
 
 
 def default_modules(client: HomeCloudClient) -> list[ServiceModule]:
