@@ -24,7 +24,11 @@ homecloud login
 eval "$(homecloud mcp env)"   # sets HC_ACCESS_TOKEN — do not commit
 ```
 
-Configure Cursor/Claude with `Authorization: Bearer ${env:HC_ACCESS_TOKEN}` (see `homecloud-docs` `cli/mcp.md`). Wave 1 exposes **`tasks_search` only**.
+Configure Cursor/Claude with `Authorization: Bearer ${env:HC_ACCESS_TOKEN}` (see `homecloud-docs` `cli/mcp.md`).
+
+Remote tools: full **`tasks_*`**, plus **`so_list_buckets` / `so_list_objects`**, **`mq_list_queues` / `mq_get_queue`**.
+
+Agents without interactive login: `homecloud mcp token` (user-bound Access Key → short-lived JWT via `POST /api/v1/mcp/token`).
 
 ### stdio (local)
 

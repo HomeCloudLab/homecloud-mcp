@@ -7,7 +7,7 @@ from collections.abc import Iterable
 from homecloud_mcp.core.registry import ModuleRegistry, ServiceModule
 from homecloud_sdk import HomeCloudClient
 
-# Remote MCP Tasks surface (cloud-api Streamable HTTP). SO stays stdio-only for now.
+# Remote MCP Tasks surface (cloud-api Streamable HTTP).
 REMOTE_TASKS_TOOLS: frozenset[str] = frozenset(
     {
         "tasks_search",
@@ -41,12 +41,22 @@ REMOTE_TASKS_TOOLS: frozenset[str] = frozenset(
 # Back-compat alias
 REMOTE_WAVE1_TOOLS = REMOTE_TASKS_TOOLS
 
+REMOTE_SO_MQ_TOOLS: frozenset[str] = frozenset(
+    {
+        "so_list_buckets",
+        "so_list_objects",
+        "mq_list_queues",
+        "mq_get_queue",
+    }
+)
+
 
 def default_modules(client: HomeCloudClient) -> list[ServiceModule]:
+    from homecloud_mcp.modules.mq import MqModule
     from homecloud_mcp.modules.so import SoModule
     from homecloud_mcp.modules.tasks import TasksModule
 
-    return [TasksModule(client), SoModule(client)]
+    return [TasksModule(client), SoModule(client), MqModule(client)]
 
 
 def build_registry(
